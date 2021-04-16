@@ -1,0 +1,15 @@
+*.pdf 
+*.pptx
+*.csv
+*.png
+*.PNG
+*.zip
+*.p
+*.db
+*.pyc
+*.log
+*.svg
+*.gexf
+*.sh
+OLD/
+code_v2/.ipynb_checkpoints/
