@@ -14,6 +14,8 @@ from tqdm import tqdm
 import argparse 
 import time 
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from transformers import BertTokenizer
+import warnings
 
 # Local libraries 
 from scalp.pushshift import PushAPI 
@@ -42,12 +44,41 @@ def find_subreddit_date_range(sub_str: str) -> tuple:
 
     return (sub_s, sub_e, comm_s, comm_e)
 
+
+def extra_info(item):
+    warnings.filterwarnings("ignore")
+    analyzer = SentimentIntensityAnalyzer() 
+    tokenizer = BertTokenizer() 
+    if 'body' in item.keys():
+        score = analyzer.polarity_scores(item['body'])['compound']
+        tok_len=0
+        if item['body'] == '[deleted]': tok_len = 0
+        tok_len = len(tokenizer.encode(text=item['body'], verbose=False))
+        item['vader_body'] = score 
+        item['bert_token_body'] = tok_len
+
+    if 'title' in item.keys():
+        score = analyzer.polarity_scores(item['title'])['compound']
+        tok_len=0
+        if item['title'] == '[deleted]': tok_len = 0
+        tok_len = len(tokenizer.encode(text=item['title'], verbose=False))
+        item['vader_title'] = score 
+        item['bert_token_title'] = tok_len 
+    
+    if 'selftext' in item.keys():
+        score = analyzer.polarity_scores(item['selftext'])['compound']
+        tok_len=0
+        if item['selftext'] == '[deleted]': tok_len = 0
+        tok_len = len(tokenizer.encode(text=item['selftext'], verbose=False))
+        item['vader_selftext'] = score 
+        item['bert_token_selftext'] = tok_len
+
+    return item
+
+
 def vader_worker(dict_item):
     # TODO: implement this - check if comment or submission, then do vader on body or title&selftext
-    analyzer = SentimentIntensityAnalyzer()  
-    if 'title' in dict_item.keys():dict_item['vader_title'] = analyzer.polarity_scores(dict_item['title'])['compound']
-    if 'selftext' in dict_item.keys():dict_item['vader_selftext'] = analyzer.polarity_scores(dict_item['selftext'])['compound']
-    if 'body' in dict_item.keys():dict_item['vader_body'] = analyzer.polarity_scores(dict_item['body'])['compound']
+    dict_item = extra_info(dict_item)
     return dict_item
 
 def make_praw_list_unique(items: list) -> list:
@@ -133,10 +164,11 @@ def reddit_search_comments(sub_str: str, submission_id: str, db, reddit: praw.re
         if type(comment)==praw.models.MoreComments: # If it's a morecomments object, recursively use this function 
             all_comments = all_comments + reddit_search_morecomments(comment, sub_str, submission_id, analyzer)
         else:
-            # Calculate VADER score and add comment into list
-            score = analyzer.polarity_scores(comment.body)['compound']
-            all_comments.append({'_id': comment.id, 'subreddit': sub_str, 'author': str(comment.author), 'created_utc': comment.created_utc,
-                'score': comment.score, 'total_awards_received': comment.total_awards_received, 'body': comment.body, 'submission': submission_id, 'vader_body': score})
+            # Calculate VADER score, BERT token length and add comment into list
+            c = {'_id': comment.id, 'subreddit': sub_str, 'author': str(comment.author), 'created_utc': comment.created_utc,
+                'score': comment.score, 'total_awards_received': comment.total_awards_received, 'body': comment.body, 'submission': submission_id}
+            c = extra_info(c)
+            all_comments.append(c)
 
     insert_list(all_comments, db, "Comments")
 
@@ -158,10 +190,12 @@ def reddit_search_morecomments(more_comment: praw.models.MoreComments, sub_str: 
         if type(comment)==praw.models.MoreComments:
             all_comments = all_comments + reddit_search_morecomments(comment, sub_str, submission_id)
         else:
-            score = analyzer.polarity_scores(comment.body)['compound']
-            all_comments.append({'_id': comment.id, 'subreddit': sub_str, 'author': str(comment.author), 'created_utc': comment.created_utc,
-                'score': comment.score, 'total_awards_received': comment.total_awards_received, 'body': comment.body, 'submission': submission_id, 'vader_body': score})
-        
+            # Calculate VADER score, BERT token length and add comment into list
+            c = {'_id': comment.id, 'subreddit': sub_str, 'author': str(comment.author), 'created_utc': comment.created_utc,
+                'score': comment.score, 'total_awards_received': comment.total_awards_received, 'body': comment.body, 'submission': submission_id}
+            c = extra_info(c)
+            all_comments.append(c)
+
     return all_comments
 
 # Push API search 
@@ -201,9 +235,8 @@ def push_search_submissions(sub_str: str, db: pymongo.database.Database, start_y
                 try: new_submission[k] = submission[k] # Try and adds as many fields as possible
                 except Exception: continue
 
-            # Compute VADER sentiment on title and selftext 
-            new_submission['vader_title'] = analyzer.polarity_scores(new_submission['title'])['compound']
-            new_submission['vader_selftext'] = analyzer.polarity_scores(new_submission['selftext'])['compound']
+            # Calculate VADER score and BERT token length 
+            new_submission = extra_info(new_submission)
             new_submission['_id'] = new_submission['id'] 
             new_submission.pop('id', None)
 
@@ -254,8 +287,8 @@ def push_search_comments(sub_str: str, db: pymongo.database.Database, start_year
                 try: new_comment[k] = comment[k] # Try and adds as many fields as possible
                 except Exception: continue
 
-            # Compute VADER sentiment on title and selftext 
-            new_comment['vader_body'] = analyzer.polarity_scores(new_comment['body'])['compound']
+            # Calculate VADER score and BERT token length 
+            new_comment = extra_info(new_comment)
             new_comment['_id'] = new_comment['id'] 
             new_comment.pop('id', None)
 
