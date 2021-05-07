@@ -23,7 +23,7 @@ class PushAPI():
         # Session to retry with about an hour of retry before moving on
         http = requests.session() 
         retry_strategy = Retry(total=1800)
-        adapter = HTTPAdapter(timeout=2, max_retries=retry_strategy)
+        adapter = HTTPAdapter(max_retries=retry_strategy)
         http.mount("https://", adapter)
         http.mount("http://", adapter)
 
@@ -41,7 +41,7 @@ class PushAPI():
             str_builder += f'&limit={limit}'
             str_builder += f'&sort={sort}'
 
-            r = http.get(str_builder)
+            r = http.get(str_builder, timeout=2)
             
             # If good, return, else check with _non_200 to see what to do...atm just return 'keep going'
             if r.status_code==200:
@@ -68,7 +68,7 @@ class PushAPI():
         # Session to retry with about an hour of retry before moving on
         http = requests.session() 
         retry_strategy = Retry(total=1800)
-        adapter = HTTPAdapter(timeout=2, max_retries=retry_strategy)
+        adapter = HTTPAdapter(max_retries=retry_strategy)
         http.mount("https://", adapter)
         http.mount("http://", adapter)
 
@@ -86,7 +86,7 @@ class PushAPI():
             str_builder += f'&limit={limit}'
             str_builder += f'&sort={sort}'
 
-            r = http.get(str_builder)
+            r = http.get(str_builder, timeout=2)
             
             # If good, return, else check with _non_200 to see what to do...atm just return 'keep going'
             if r.status_code==200:

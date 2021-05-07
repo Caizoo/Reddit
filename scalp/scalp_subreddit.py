@@ -48,30 +48,30 @@ def find_subreddit_date_range(sub_str: str) -> tuple:
 def extra_info(item):
     warnings.filterwarnings("ignore")
     analyzer = SentimentIntensityAnalyzer() 
-    tokenizer = BertTokenizer() 
+    #tokenizer = BertTokenizer('bert-base-uncased') 
     if 'body' in item.keys():
         score = analyzer.polarity_scores(item['body'])['compound']
-        tok_len=0
-        if item['body'] == '[deleted]': tok_len = 0
-        tok_len = len(tokenizer.encode(text=item['body'], verbose=False))
+        #tok_len=0
+        #if item['body'] == '[deleted]': tok_len = 0
+        #tok_len = len(tokenizer.encode(text=item['body'], verbose=False))
         item['vader_body'] = score 
-        item['bert_token_body'] = tok_len
+        #item['bert_token_body'] = tok_len
 
     if 'title' in item.keys():
         score = analyzer.polarity_scores(item['title'])['compound']
-        tok_len=0
-        if item['title'] == '[deleted]': tok_len = 0
-        tok_len = len(tokenizer.encode(text=item['title'], verbose=False))
+        #tok_len=0
+        #if item['title'] == '[deleted]': tok_len = 0
+        #tok_len = len(tokenizer.encode(text=item['title'], verbose=False))
         item['vader_title'] = score 
-        item['bert_token_title'] = tok_len 
+        #item['bert_token_title'] = tok_len 
     
     if 'selftext' in item.keys():
         score = analyzer.polarity_scores(item['selftext'])['compound']
-        tok_len=0
-        if item['selftext'] == '[deleted]': tok_len = 0
-        tok_len = len(tokenizer.encode(text=item['selftext'], verbose=False))
+        #tok_len=0
+        #if item['selftext'] == '[deleted]': tok_len = 0
+        #tok_len = len(tokenizer.encode(text=item['selftext'], verbose=False))
         item['vader_selftext'] = score 
-        item['bert_token_selftext'] = tok_len
+        #item['bert_token_selftext'] = tok_len
 
     return item
 
