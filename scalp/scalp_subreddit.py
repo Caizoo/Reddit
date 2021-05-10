@@ -345,8 +345,7 @@ def master_comment_worker(data_dict: dict):
     db = client[database_str] 
     analyzer = SentimentIntensityAnalyzer() 
     api_keys = json.load(open("keys.json", "r"))["keys"]
-    api_index = int(multiprocessing.current_process().name.split("-")[1])-1 
-    print(api_index)
+    api_index = (int(multiprocessing.current_process().name.split("-")[1])-1)%16
     api_key = api_keys[api_index]
 
     REDDIT_ID = str(list(api_key.keys())[0])
