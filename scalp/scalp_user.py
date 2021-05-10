@@ -210,7 +210,7 @@ def get_user_windows(sub_str: str, db: pymongo.database.Database, top_x: int, st
     for index, month_comms in comms_groups:
         print(f"[INFO]: fetching comments for {index}")
         actual_top, fetchable_top = find_top_users(month_comms, top_x, ensure_fetchable=True, args=args)
-        top_users_submissions[str(index)] = {'actual': actual_top, 'fetchable': fetchable_top}
+        top_users_comments[str(index)] = {'actual': actual_top, 'fetchable': fetchable_top}
 
     return top_users_submissions, top_users_comments
 
