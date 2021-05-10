@@ -245,8 +245,10 @@ def push_search_submissions(sub_str: str, db: pymongo.database.Database, start_y
         # Insert into DB
         insert_list(temp_ids, db, 'Submissions')
 
+        submission_ids = [a['_id'] for a in temp_ids]
+
         # If using this method, multiprocess download the comments for these submissions on-the-fly
-        if incremental_comment_search: download_threaded_comments(temp_ids, sub_str, args) # atm is sync multiprocessing, TODO: test with async function and threading
+        if incremental_comment_search: download_threaded_comments(submission_ids, sub_str, args) # atm is sync multiprocessing, TODO: test with async function and threading
 
         # New start_epoch is the time of the last submission downloaded, so download the next lot of submissions from this time
         submission = submissions[-1]
