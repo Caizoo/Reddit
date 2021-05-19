@@ -197,11 +197,17 @@ def scalp_users(args: dict):
 
     # Loop through json file and create a set of top users (no duplicates)
     sub_list = list(json_top_users.keys()) if args['sub']=='' else [args['sub']]
-    for sub in sub_list:
-        for d_type in json_top_users[sub].keys():
-            for date in json_top_users[sub][d_type].keys():
-                fetchable_top = [a[0] for a in json_top_users[sub][d_type][date]['fetchable']]
-                set_top_users = set_top_users | set(fetchable_top)
+    if args['json_loc']=='top_users':
+        for sub in sub_list:
+            for d_type in json_top_users[sub].keys():
+                for date in json_top_users[sub][d_type].keys():
+                    fetchable_top = [a[0] for a in json_top_users[sub][d_type][date]['fetchable']]
+                    set_top_users = set_top_users | set(fetchable_top)
+    
+    elif args['json_loc']=='rand_users':
+        for sub in sub_list:
+            set_top_users = set_top_users | set(json_top_users[sub]) 
+    
     
     # Multiprocessing (max processes same as number of keys in keys.json)
     all_users = list(set_top_users)
