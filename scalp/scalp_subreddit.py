@@ -188,7 +188,7 @@ def reddit_search_morecomments(more_comment: praw.models.MoreComments, sub_str: 
     all_comments = list()
     for comment in more_comment.comments():
         if type(comment)==praw.models.MoreComments:
-            all_comments = all_comments + reddit_search_morecomments(comment, sub_str, submission_id)
+            all_comments = all_comments + reddit_search_morecomments(comment, sub_str, submission_id, analyzer)
         else:
             # Calculate VADER score, BERT token length and add comment into list
             c = {'_id': comment.id, 'subreddit': sub_str, 'author': str(comment.author), 'created_utc': comment.created_utc,
