@@ -7,6 +7,7 @@ import prawcore
 
 # Other imports 
 import pandas as pd 
+import numpy as np 
 import datetime as dt 
 from tqdm import tqdm
 import multiprocessing 
@@ -169,6 +170,50 @@ def find_top_users(df: pd.DataFrame, top_x: int, ensure_fetchable: bool = False,
 
     return user_tuples[:top_x], new_tups[:top_x] # return actual and fetchable lists, ensure_fetchable=False returns actual and empty
 
+def get_user_random(sub_str: str, db: pymongo.database.Database, num_users: int, args: dict = dict()) -> list:
+    """ Get list of random users for a subreddit
+
+    Args:
+        sub_str (str): Subreddit name
+        db (pymongo.database.Database): Database instance to insert data 
+        start_year (int, optional): Year to start looking for windows. Defaults to 2020.
+        args (dict, optional): Arguments dict. Defaults to dict().
+    Returns:
+        list: List of fetchable users randomly sampled with a given threshold 
+    """
+    reddit = get_default_reddit_instance() # returns Reddit API instance using key at index 0 from keys.json
+    unix_start = dt.datetime(args['year'], 1, 1, tzinfo=dt.timezone.utc).timestamp() # Loop through submissions starting from this time
+    submissions, comments = pd.DataFrame(), pd.DataFrame() 
+    top_users_submissions, top_users_comments = dict(), dict() 
+
+    # Fetch submissions and comments for this subreddit from unix_start onwards
+    submissions = pd.DataFrame(db['Submissions'].find({'subreddit': sub_str, 'created_utc': {'$gte': unix_start}}))
+    comments = pd.DataFrame(db['Comments'].find({'subreddit': sub_str, 'created_utc': {'$gte': unix_start}}))
+
+    # Add in created field for actual date from the UNIX epoch timestamp field created_utc
+    submissions['created'] = [dt.datetime.fromtimestamp(a, tz=dt.timezone.utc) for a in submissions['created_utc']] 
+    comments['created'] = [dt.datetime.fromtimestamp(a, tz=dt.timezone.utc) for a in comments['created_utc']] 
+    submissions.dropna() 
+    comments.dropna() 
+
+    posts = pd.concat([submissions, comments]) 
+
+    author_threshold_list = [] 
+    posts_grouped = posts.groupby('author') 
+    for a, g in tqdm(posts_grouped):
+        if len(g)<args['threshold']: continue
+        author_threshold_list.append(a) 
+
+    reduced_author_list = [] 
+    rand_indices = list(range(len(author_threshold_list)))
+    rand_indices = list(np.random.choice(rand_indices, len(rand_indices)))
+    for i in tqdm(rand_indices):
+        if is_user_fetchable(author_threshold_list[i], reddit, args): reduced_author_list.append(author_threshold_list[i]) 
+        if len(reduced_author_list)>=args['top_x']: break
+
+    return reduced_author_list
+
+
 def get_user_windows(sub_str: str, db: pymongo.database.Database, top_x: int, start_year: int = 2020, args: dict = dict()) -> tuple:
     """ Get windowed lists of top users for each month
 
@@ -176,7 +221,6 @@ def get_user_windows(sub_str: str, db: pymongo.database.Database, top_x: int, st
         sub_str (str): Subreddit name
         db (pymongo.database.Database): Database instance to insert data 
         top_x (int): Top X users
-        reddit (praw.reddit.Reddit): Reddit API instance 
         start_year (int, optional): Year to start looking for windows. Defaults to 2020.
         args (dict, optional): Arguments dict. Defaults to dict().
     Returns:

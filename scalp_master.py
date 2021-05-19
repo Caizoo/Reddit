@@ -1,4 +1,4 @@
-# Data fetch anb store
+ # Data fetch anb store
 from praw.models import user
 import pymongo 
 from pymongo import MongoClient, errors 
@@ -17,7 +17,7 @@ import timeit
 from scalp.scalp_subreddit import download_threaded_comments, push_search_submissions, push_search_comments, reddit_search_comments, reddit_search_submissions
 from scalp.scalp_help import get_default_reddit_instance, insert_list
 from scalp.pushshift import PushAPI
-from scalp.scalp_user import get_user_windows, user_scalp_worker
+from scalp.scalp_user import get_user_random, get_user_windows, user_scalp_worker
 
 # Scalp subreddits
 
@@ -142,8 +142,44 @@ def build_top_list(args: dict): # Loop subreddits in submissions, build list of 
 
     client.close() 
 
+def build_random_list(args: dict):
+    """ Build a JSON file of randomly sampled users with some threshold for en-masse downloading and reducing duplicate downloads of users - as well as 
+        being able to quickly fetch the list without calling and aggregating from mongodb. Save to ./scalp/cache/rand_users.json
+
+    Args:
+        args (dict): Dict of arguments:
+                    sub: subreddit name
+                    mongodb_address: address (IP) of mongo db without the mongodb://
+                    username: mongo username
+                    password: mongo password 
+                    database_str: database name
+                    threshold: minimum number of posts (comments/submissions) to be considered for sampling
+    """
+    mongodb_address, username, password, database_str = args['mongodb_address'], args['username'], args['password'], args['database_str']
+    
+    client = MongoClient(f'mongodb://{username}:{password}@{mongodb_address}/', connect=False) if username!='' else MongoClient(f'mongodb://{mongodb_address}/', connect=False)
+    db = client[database_str]
+
+    # Aggregate subreddits with at least one submission downloaded
+    subreddits_list = [a['_id'] for a in list(db['Submissions'].aggregate([{'$group': {'_id': '$subreddit'}}]))]
+    
+    for sub in [args['sub']]:
+        print(f'[INFO]: building random user list for {sub}') 
+        #top_submit, top_comm = get_user_windows(sub, db, 500, 2020, args=args) # Fetch windowed top users for sub
+
+        rand_user_list = get_user_random(sub, db, num_users=args['top_x'], args=args) # use top_x to limit number of users sampled 
+        print(len(rand_user_list))
+        
+        # Store top users in json file 
+        rand_users_json = json.load(open('scalp/cache/rand_users.json', 'r')) 
+        rand_users_json[sub] = rand_user_list
+        json.dump(rand_users_json, open('scalp/cache/rand_users.json', 'w'))
+
+    client.close() 
+
 def scalp_users(args: dict):
-    """ From build JSON list in ./scalp/cache/top_users.json, scalp user submissions and comments from all time (have to use hot, new, top, controversial from Reddit API)
+    """ From build JSON list in ./scalp/cache/top_users.json, scalp user submissions and comments from all time (have to use hot, new, top, controversial 
+        from Reddit API)
 
     Args:
         args (dict): Dict of arguments:
@@ -156,7 +192,7 @@ def scalp_users(args: dict):
     mongodb_address, username, password, database_str = args['mongodb_address'], args['username'], args['password'], 'Users' 
 
     # Fetch top user json file
-    json_top_users = json.load(open('scalp/cache/top_users.json'))
+    json_top_users = json.load(open(f'scalp/cache/{args["json_loc"]}.json'))
     set_top_users = set() 
 
     # Loop through json file and create a set of top users (no duplicates)
@@ -187,14 +223,17 @@ if __name__=="__main__":
     parser.add_argument('--dstring', dest='database_str', type=str, default='Reddit') # Only used when building top list 
     parser.add_argument('--p_subs', dest='push_submissions', type=int, default=1) # Use PushAPI to download submissions
     parser.add_argument('--p_comms', dest='push_comments', type=int, default=0) # Use PushAPI to download comments
+
     parser.add_argument('--year', dest='year', type=int, default=2020)
-    parser.add_argument('--topx', dest='top_x', type=int, default=500) 
+    parser.add_argument('--topx', dest='top_x', type=int, default=500)
+    parser.add_argument('--threshold', dest='threshold', type=int, default=10)
+    parser.add_argument('--jloc', dest='json_loc', type=str, default='top_users')
     
 
     args = parser.parse_args() 
 
-    assert args.scalp_method in ['subreddit', 'controversial', 'random', 'users', 'build_list']
+    assert args.scalp_method in ['subreddit', 'controversial', 'random', 'users', 'build_list', 'build_random']
     func_map = {'subreddit': scalp_subreddit, 'controversial': scalp_controversial_subreddit, 'random': scalp_random_subreddit, 
-                'users': scalp_users, 'build_list': build_top_list}
+                'users': scalp_users, 'build_list': build_top_list, 'build_random': build_random_list}
             
     func_map[args.scalp_method](vars(args))
