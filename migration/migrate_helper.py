@@ -1,8 +1,8 @@
 import json 
 
 
-def fetch_top_users_from_file(subreddit: str):
-    json_top_users = json.load(open('scalp/cache/top_users.json', 'r'))
+def fetch_top_users_from_file(subreddit: str, json_file: str='top_users'):
+    json_top_users = json.load(open(f'scalp/cache/{json_file}.json', 'r'))
     set_top_users = set() 
     try:
         for d_type in json_top_users[subreddit].keys():

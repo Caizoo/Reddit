@@ -50,7 +50,9 @@ def extra_info(item):
     analyzer = SentimentIntensityAnalyzer() 
     #tokenizer = BertTokenizer('bert-base-uncased') 
     if 'body' in item.keys():
-        score = analyzer.polarity_scores(item['body'])['compound']
+        score = 0
+        try: analyzer.polarity_scores(item['body'])['compound']
+        except Exception: pass 
         #tok_len=0
         #if item['body'] == '[deleted]': tok_len = 0
         #tok_len = len(tokenizer.encode(text=item['body'], verbose=False))
@@ -58,7 +60,9 @@ def extra_info(item):
         #item['bert_token_body'] = tok_len
 
     if 'title' in item.keys():
-        score = analyzer.polarity_scores(item['title'])['compound']
+        score = 0
+        try: analyzer.polarity_scores(item['title'])['compound']
+        except Exception: pass 
         #tok_len=0
         #if item['title'] == '[deleted]': tok_len = 0
         #tok_len = len(tokenizer.encode(text=item['title'], verbose=False))
@@ -66,7 +70,9 @@ def extra_info(item):
         #item['bert_token_title'] = tok_len 
     
     if 'selftext' in item.keys():
-        score = analyzer.polarity_scores(item['selftext'])['compound']
+        score = 0
+        try: analyzer.polarity_scores(item['selftext'])['compound']
+        except Exception: pass 
         #tok_len=0
         #if item['selftext'] == '[deleted]': tok_len = 0
         #tok_len = len(tokenizer.encode(text=item['selftext'], verbose=False))

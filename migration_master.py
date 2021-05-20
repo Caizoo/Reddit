@@ -1,5 +1,4 @@
 import json
-from migration.micro_migrate import run_micro_sc 
 import multiprocessing
 import matplotlib.pyplot as plt 
 from pandas.core import series
@@ -15,7 +14,8 @@ import tqdm
 
 
 from migration.macro_migrate import run_macro
-
+from migration.micro_migrate import run_micro_sc, run_micro
+from migration.reverse_migrate import run_reverse_migration
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
@@ -43,3 +43,5 @@ if __name__=="__main__":
         run_micro_sc(args_vars) 
     elif args_vars['migrate_type']=='micro':
         run_micro(args_vars)
+    elif args_vars['migrate_type']=='rev':
+        run_reverse_migration(args_vars)
