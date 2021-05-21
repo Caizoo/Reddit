@@ -11,6 +11,7 @@ import itertools
 from scipy import stats
 import numpy as np 
 import tqdm
+import seaborn as sns 
 
 from migration.migrate_helper import fetch_top_users_from_file, fetch_rand_users_from_file
 
@@ -89,6 +90,7 @@ def run_micro_sc(args: dict):
 
 
 def migration_worker(migrate_dict: dict):
+    a, g, comments_g_s = migration_dict['a'], migrate_dict['g'], migrate_dict['comments_g_s']
     edges = {} 
     subs = g['subreddit'].values 
     subs = [a if a in comments_g_s else 'other' for a in subs]
@@ -101,7 +103,7 @@ def migration_worker(migrate_dict: dict):
     e_np = [[aa/len(g) for aa in a] for a in e_np]
     edges = pd.DataFrame(e_np, columns=edges.columns, index=edges.index)
         
-    graphs.append(edges) 
+    return edges 
 
 def run_micro(args: dict):
     users = fetch_rand_users_from_file(args['sub'])  
@@ -122,4 +124,20 @@ def run_micro(args: dict):
 
     graphs = pd.concat(graphs)
     by_row_index = graphs.groupby(graphs.index) 
-    graphs = by_row_index.mean()  
+    graphs = by_row_index.mean()
+
+    df = graphs  
+
+    # Set up the matplotlib figure
+    f, ax = plt.subplots(figsize=(10, 6))
+
+    # Generate a custom diverging colormap
+    cmap = sns.diverging_palette(230, 20, as_cmap=True)
+
+    # Draw the heatmap with the mask and correct aspect ratio
+    g = sns.heatmap(df, cmap=cmap, center=0, linewidths=.5, cbar_kws={"shrink": .5}, square=True)
+    g.set_xticklabels(g.get_xmajorticklabels(), fontsize = 8)
+    g.set_yticklabels(g.get_ymajorticklabels(), fontsize = 8)
+    g.set(xlabel='Real', ylabel='Predicted')
+    plt.tight_layout() 
+    plt.show()
