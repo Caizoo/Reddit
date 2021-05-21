@@ -1,5 +1,6 @@
 import json 
 import multiprocessing
+from os import remove
 import matplotlib.pyplot as plt 
 from pandas.core import series
 import pymongo 
@@ -10,7 +11,7 @@ import pandas as pd
 import itertools
 from scipy import stats
 import numpy as np 
-import tqdm
+from tqdm import tqdm
 import seaborn as sns 
 
 from migration.migrate_helper import fetch_top_users_from_file, fetch_rand_users_from_file
@@ -90,7 +91,7 @@ def run_micro_sc(args: dict):
 
 
 def migration_worker(migrate_dict: dict):
-    a, g, comments_g_s = migration_dict['a'], migrate_dict['g'], migrate_dict['comments_g_s']
+    a, g, comments_g_s = migrate_dict['a'], migrate_dict['g'], migrate_dict['comments_g_s']
     edges = {} 
     subs = g['subreddit'].values 
     subs = [a if a in comments_g_s else 'other' for a in subs]
@@ -114,7 +115,7 @@ def run_micro(args: dict):
     comments = pd.DataFrame(db['User_Comments'].find({'author': {'$in': users}})).sort_values(by='created_utc', ascending=True)
 
     comments_g_a = comments.groupby('author') 
-    comments_g_s = list(comments.groupby('subreddit').size().sort_values(ascending=False).index[:100].values)
+    comments_g_s = list(comments.groupby('subreddit').size().sort_values(ascending=False).index[:20].values)
 
     graphs = []
     migrate_list = [{'a': a, 'g': g, 'comments_g_s': comments_g_s} for a, g in comments_g_a]
@@ -126,8 +127,14 @@ def run_micro(args: dict):
     by_row_index = graphs.groupby(graphs.index) 
     graphs = by_row_index.mean()
 
-    df = graphs  
+    df = graphs.copy() 
+    df = df[df.index] 
+    df = df.fillna(0.0)
 
+    remove_loops = True 
+    if remove_loops:
+        for c in df.columns: 
+            df.loc[c, c] = 0.0
     # Set up the matplotlib figure
     f, ax = plt.subplots(figsize=(10, 6))
 
@@ -138,6 +145,6 @@ def run_micro(args: dict):
     g = sns.heatmap(df, cmap=cmap, center=0, linewidths=.5, cbar_kws={"shrink": .5}, square=True)
     g.set_xticklabels(g.get_xmajorticklabels(), fontsize = 8)
     g.set_yticklabels(g.get_ymajorticklabels(), fontsize = 8)
-    g.set(xlabel='Real', ylabel='Predicted')
+    #sns.heatmap(df)
     plt.tight_layout() 
     plt.show()
