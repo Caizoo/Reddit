@@ -28,6 +28,7 @@ def run_reverse_migration(args: dict):
     comments['created'] = [dt.datetime.fromtimestamp(a, tz=dt.timezone.utc) for a in comments['created_utc']]
 
     all_graphs = {}
+    all_author = {} 
     comments_d = comments.groupby(pd.Grouper(key='created', freq='1M'))
     comments_g_s = list(comments.groupby('subreddit').size().sort_values(ascending=False).index[:20].values)
 
@@ -35,6 +36,7 @@ def run_reverse_migration(args: dict):
         comments_g_a = comments_month.groupby('author') 
 
         graphs = []
+        author_size = comments_g_a.ngroups
         for a, g in comments_g_a:
             edges = {k: {k: 0} for k in comments_g_s}
             edges = dict({'other': {k: 0} for k in comments_g_s}, **edges)
@@ -62,7 +64,9 @@ def run_reverse_migration(args: dict):
         graphs = graphs.reindex(comments_g_s+['other'])
         graphs = graphs[graphs.index]
         all_graphs[d] = graphs 
+        all_author[d] = author_size
 
     pickle.dump(all_graphs, open('all_graphs.p', 'wb'))
+    pickle.dump(all_author, open('all_author.p', 'wb'))
     # need to draw graph from DataFrame - print(graphs)
         

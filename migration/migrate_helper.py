@@ -1,9 +1,10 @@
 import pandas as pd 
 import json 
 import networkx as nx
+import matplotlib.pyplot as plt 
 
-def print_graph(df: pd.DataFrame):
-
+def print_graph(df: pd.DataFrame, title: str='', save_loc: str=''):
+    plt.figure() 
     cols = df.columns
     df.columns = list(range(len(df.columns))) 
     df.index = list(range(len(df.index)))
@@ -30,6 +31,12 @@ def print_graph(df: pd.DataFrame):
 
     for i, c in enumerate(cols):
         print(f'{c}: {i}')
+
+    if save_loc!='':
+        plt.title(title)
+        plt.tight_layout()
+        plt.savefig(save_loc, format="PNG")
+    
 
 
 def fetch_top_users_from_file(subreddit: str) -> list:
