@@ -1,5 +1,36 @@
 import pandas as pd 
 import json 
+import networkx as nx
+
+def print_graph(df: pd.DataFrame):
+
+    cols = df.columns
+    df.columns = list(range(len(df.columns))) 
+    df.index = list(range(len(df.index)))
+
+    edge_list = [] 
+    for c in df.columns: 
+        for i in df.index:
+            edge_list.append({'from': c, 'to': i, 'weight': df.loc[i, c]}) 
+    
+    edge_list = pd.DataFrame(edge_list)
+    
+    G = nx.from_pandas_edgelist(edge_list, source='from', target='to', edge_attr='weight')
+    pos = nx.circular_layout(G)  # positions for all nodes
+    
+
+    # nodes
+    nx.draw_networkx_nodes(G, pos, node_size=100)
+
+    # edges
+    edges = G.edges()
+    weights = [G[u][v]['weight'] for u,v in edges]
+    nx.draw_networkx_edges(G, pos, width=weights)
+    nx.draw_networkx_labels(G, pos, {k: k for k in df.columns}, font_size=16)
+
+    for i, c in enumerate(cols):
+        print(f'{c}: {i}')
+
 
 def fetch_top_users_from_file(subreddit: str) -> list:
     json_top_users = json.load(open('scalp/cache/top_users.json', 'r'))

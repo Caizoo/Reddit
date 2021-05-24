@@ -112,7 +112,8 @@ def run_micro(args: dict):
     client = MongoClient(f'mongodb://{username}:{password}@{mongodb_address}/', connect=False) if username!='' else MongoClient(f'mongodb://{mongodb_address}/', connect=False)
     db = client[database_str] 
 
-    comments = pd.DataFrame(db['User_Comments'].find({'author': {'$in': users}})).sort_values(by='created_utc', ascending=True)
+    unix_year = dt.datetime(args['year'], 1, 1, tzinfo=dt.timezone.utc).timestamp()
+    comments = pd.DataFrame(db['User_Comments'].find({'author': {'$in': users}, 'created_utc': {'$gte': unix_year}})).sort_values(by='created_utc', ascending=True)
 
     comments_g_a = comments.groupby('author') 
     comments_g_s = list(comments.groupby('subreddit').size().sort_values(ascending=False).index[:20].values)

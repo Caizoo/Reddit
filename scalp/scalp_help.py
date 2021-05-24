@@ -12,6 +12,9 @@ import json
 import scalp.pushshift 
 from scalp.pushshift import PushAPI
 
+def hash_author(l_insert: list) -> list:
+    return list(map(lambda a: a, l_insert))
+
 def insert_list(l_insert: list, db: pymongo.database.Database, collection_str: str, overwrite: bool = True):
     """ Insert list of dict objects into a database
 
@@ -20,6 +23,9 @@ def insert_list(l_insert: list, db: pymongo.database.Database, collection_str: s
         db (pymongo.database.Database): PyMongo database instance to insert objects
         collection_str (str): String denoting the name of the collection to insert into 
     """
+
+
+
     try:
         # inserts new documents 
         db[collection_str].insert_many(l_insert, ordered=False, bypass_document_validation=True)
