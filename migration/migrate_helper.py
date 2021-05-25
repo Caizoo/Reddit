@@ -24,7 +24,7 @@ def print_graph(df: pd.DataFrame, title: str='', save_loc: str='', no_other: boo
 
     for c in df.columns: 
         for i in df.index:
-            weight = ((df.loc[i, c])/max_weight)*1 
+            weight = ((df.loc[i, c])/max_weight)
             #weight = (df.loc[i, c])
             edge_list.append({'from': c, 'to': i, 'weight': weight}) 
     

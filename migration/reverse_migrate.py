@@ -26,7 +26,7 @@ def run_reverse_migration(args: dict):
     comments = pd.DataFrame(db['User_Comments'].find({'author': {'$in': users}})).sort_values(by='created_utc', ascending=True)
     comments['created'] = [dt.datetime.fromtimestamp(a, tz=dt.timezone.utc) for a in comments['created_utc']]
 
-    all_graphs = {}
+    all_graphs, all_graphs_nan = {}, {} 
     all_author = {} 
     comments_d = comments.groupby(pd.Grouper(key='created', freq='1M'))
     comments_g_s = list(comments.groupby('subreddit').size().sort_values(ascending=False).index[:20].values)
@@ -34,7 +34,7 @@ def run_reverse_migration(args: dict):
     for d, comments_month in tqdm(comments_d):
         comments_g_a = comments_month.groupby('author') 
 
-        graphs = []
+        graphs, graphs_nan = [], []
         author_size = comments_g_a.ngroups
         for a, g in comments_g_a:
             edges = {k: {k: 0} for k in comments_g_s}
@@ -49,24 +49,37 @@ def run_reverse_migration(args: dict):
             e_np = edges.to_numpy() 
             e_np = [[aa/len(g) for aa in a] for a in e_np]
             edges = pd.DataFrame(e_np, columns=edges.columns, index=edges.index)
-            edges = edges.fillna(0.0)
-            
-            graphs.append(edges)
+
+            graphs_nan.append(edges)
+            graphs.append(edges.fillna(0.0))
+
 
         graphs = pd.concat(graphs)
+        graphs_nan = pd.concat(graphs_nan)
         by_row_index = graphs.groupby(graphs.index) 
+        by_row_index_nan = graphs_nan.groupby(graphs_nan.index)
         try:
             graphs = by_row_index.mean() 
         except pd.core.base.DataError as e:
             graphs = pd.DataFrame() 
+        try:
+            graphs_nan = by_row_index_nan.mean() 
+        except pd.core.base.DataError as e:
+            graphs_nan = pd.DataFrame() 
 
         comments_g_s.sort() 
         graphs = graphs.reindex(comments_g_s+['other'])
+        graphs_nan = graphs_nan.reindex(comments_g_s+['other'])
         graphs = graphs[graphs.index]
+        graphs_nan = graphs_nan[graphs_nan.index]
+
         all_graphs[d] = graphs 
+        all_graphs_nan[d] = graphs_nan
         all_author[d] = author_size
 
     pickle.dump(all_graphs, open('all_graphs.p', 'wb'))
+    pickle.dump(all_graphs_nan, open('all_graphs_nan.p', 'wb'))
     pickle.dump(all_author, open('all_author.p', 'wb'))
-    # need to draw graph from DataFrame - print(graphs)
+
+    
         

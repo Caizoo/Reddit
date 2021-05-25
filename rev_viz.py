@@ -27,7 +27,7 @@ def interact_func(date):
     n_date = dt.datetime.strptime(date, '%Y-%m')
     df = n_all_graphs[str(n_date)+'+00:00']
     df = df.fillna(0.0)
-    print_graph(df, no_other=True, no_loop=False, save_loc='.')
+    print_graph(df, no_other=True, no_loop=True)
 
 dates = pd.date_range(start=dt.datetime(2019,1,1, tzinfo=dt.timezone.utc), end=dt.datetime(2021,4,1, tzinfo=dt.timezone.utc), freq='1M').to_list()
 dates = [d.strftime("%Y-%m") for d in dates]
@@ -40,6 +40,6 @@ interact(interact_func,
 #    df = n_all_graphs[str(n_date)+'+00:00']
 #    df = df.fillna(0.0)
 #    print(f"{d}: {n_all_author[str(n_date)+'+00:00']}")
-    #print_graph(df, title=d, save_loc=f'res/{d}.png')
+#    print_graph(df, title=d+'  users:'+str(n_all_author[str(n_date)+'+00:00']), save_loc=f'res/{d}.png', no_other=True, no_loop=True)
 
 # %%
