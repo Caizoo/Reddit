@@ -73,14 +73,14 @@ def run_macro(args: dict):
     dfs = pd.concat(dfs)
     dfs_norm = pd.concat(dfs_norm)
 
-    top_subs = dfs_norm.sum().sort_values(ascending=False).index[:20] # find top 20 subreddits based on absolute sum across all users
+    top_subs = dfs_norm.sum().sort_values(ascending=False).index[:args["top_x"]] # find top 20 subreddits based on absolute sum across all users
 
     # TODO: SAVE AS SVG using args['plot_file_str']
 
     # Average over users
     by_row_index = dfs.groupby(dfs.index)
-    df_means = by_row_index.mean()
-    df_means = df_means.loc['2019-11-01':]
+    df_means = by_row_index.sum()
+    df_means = df_means.loc[f'{args["year"]}-11-01':]
     df_means = df_means[top_subs]
     
     legs = list() 
@@ -95,7 +95,7 @@ def run_macro(args: dict):
 
     by_row_index = dfs_norm.groupby(dfs_norm.index)
     df_means = by_row_index.mean()
-    df_means = df_means.loc['2019-11-01':]
+    df_means = df_means.loc[f'{args["year"]}-11-01':]
     df_means = df_means[top_subs]
     
     legs = list() 
