@@ -2,24 +2,38 @@ import pandas as pd
 import json 
 import networkx as nx
 import matplotlib.pyplot as plt 
+import numpy as np 
 
-def print_graph(df: pd.DataFrame, title: str='', save_loc: str=''):
+def print_graph(df: pd.DataFrame, title: str='', save_loc: str='', no_other: bool=False, no_loop: bool=False):
+
+    if no_other:
+        df = df.drop(axis=0, labels=['other'])
+        df = df.drop(axis=1, labels=['other'])
+    if no_loop:
+        n = df.to_numpy() 
+        np.fill_diagonal(n, 0.0) 
+        df = pd.DataFrame(data=n, columns=df.columns, index=df.index)
+
     plt.figure() 
     cols = df.columns
     df.columns = list(range(len(df.columns))) 
     df.index = list(range(len(df.index)))
 
     edge_list = [] 
+    max_weight = df.max().max() 
+
     for c in df.columns: 
         for i in df.index:
-            edge_list.append({'from': c, 'to': i, 'weight': df.loc[i, c]}) 
+            weight = ((df.loc[i, c])/max_weight)*1 
+            #weight = (df.loc[i, c])
+            edge_list.append({'from': c, 'to': i, 'weight': weight}) 
     
     edge_list = pd.DataFrame(edge_list)
+    print(edge_list.max())
     
     G = nx.from_pandas_edgelist(edge_list, source='from', target='to', edge_attr='weight')
     pos = nx.circular_layout(G)  # positions for all nodes
     
-
     # nodes
     nx.draw_networkx_nodes(G, pos, node_size=100)
 

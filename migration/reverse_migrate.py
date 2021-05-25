@@ -49,6 +49,7 @@ def run_reverse_migration(args: dict):
             e_np = edges.to_numpy() 
             e_np = [[aa/len(g) for aa in a] for a in e_np]
             edges = pd.DataFrame(e_np, columns=edges.columns, index=edges.index)
+            edges = edges.fillna(0.0)
             
             graphs.append(edges)
 
