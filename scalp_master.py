@@ -1,4 +1,5 @@
- # Data fetch anb store
+#coding: utf8
+# Data fetch anb store
 from praw.models import user
 import pymongo 
 from pymongo import MongoClient, errors 

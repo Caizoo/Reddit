@@ -1,3 +1,4 @@
+#coding: utf8
 import json
 import multiprocessing
 import matplotlib.pyplot as plt 
