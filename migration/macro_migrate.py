@@ -12,7 +12,7 @@ from scipy import stats
 import numpy as np 
 import tqdm
 
-from migration.migrate_helper import fetch_top_users_from_file
+from migration.migrate_helper import fetch_rand_users_from_file, fetch_top_users_from_file
 
 
 def run_macro(args: dict):
@@ -32,6 +32,8 @@ def run_macro(args: dict):
     users_oi = list() # users of interest
     if args['file_str']=='scalp/cache/top_users.json':
         users_oi = fetch_top_users_from_file(args['sub'])
+    elif args['file_str']=='scalp/cache/rand_users.json':
+        users_oi = fetch_rand_users_from_file(args['sub'])
     else:
         users_oi = list(json.load(open(args['file_str'], 'r'))['users'])
     

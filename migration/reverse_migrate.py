@@ -16,7 +16,6 @@ import pickle
 
 from migration.migrate_helper import fetch_rand_users_from_file
 
-
 # TODO: redo this but temporaly, so by day/month and have a dict 'graph' instead of a single graph
 def run_reverse_migration(args: dict):
     users = fetch_rand_users_from_file(args['sub'])  
