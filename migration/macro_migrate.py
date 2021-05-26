@@ -1,7 +1,6 @@
 import json 
 import multiprocessing
 import matplotlib.pyplot as plt 
-from pandas.core import series
 import pymongo 
 from pymongo import MongoClient 
 import argparse
