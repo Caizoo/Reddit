@@ -67,7 +67,8 @@ def run_macro(args: dict):
         # Scale all time series by the value in subs_series_max
         df_np = [[aa/subs_series_max for aa in a] for a in df.to_numpy()]
 
-        dfs_norm.append(pd.DataFrame(data=df_np, index=df.index, columns=df.columns)) # normalised time series
+        df_norm = pd.DataFrame(data=df_np, index=df.index, columns=df.columns).fillna(0.0)
+        dfs_norm.append(df_norm) # normalised time series
         dfs.append(df) # absolute time series 
 
     dfs = pd.concat(dfs)
@@ -100,7 +101,7 @@ def run_macro(args: dict):
     
     legs = list() 
     for c in df_means.columns:
-        df_c = df_means[c].ewm(7).mean() 
+        df_c = df_means[c].ewm(28).mean() 
         df_c.plot() 
         legs.append(c) 
 
