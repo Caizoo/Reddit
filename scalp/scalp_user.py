@@ -209,9 +209,6 @@ def get_user_random(sub_str: str, db: pymongo.database.Database, num_users: int,
     rand_indices = list(range(len(author_threshold_list)))
     rand_indices = list(np.random.choice(rand_indices, len(rand_indices), replace=False))
 
-    print(len(rand_indices))
-    print(len(set(rand_indices)))
-
     for i in tqdm(rand_indices):
         if is_user_fetchable(author_threshold_list[i], reddit, args): 
             reduced_author_list.append(author_threshold_list[i]) 
