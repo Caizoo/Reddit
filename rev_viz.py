@@ -6,17 +6,22 @@ import seaborn as sns
 import datetime as dt 
 from dateutil.relativedelta import relativedelta
 import pandas as pd 
+from pymongo import MongoClient
+import json 
+import multiprocessing
+from tqdm import tqdm
 
 from IPython.display import clear_output
 from ipywidgets import interact, interactive, fixed, interact_manual, Layout
 import ipywidgets as widgets
 
-from migration.migrate_helper import print_graph
+from migration.migrate_helper import fetch_rand_users_from_file, print_graph
 
 mpl.rcParams['figure.dpi'] = 300
 mpl.rcParams['lines.linewidth'] = 0.5
 sns.set_style("darkgrid")
 
+#%%
 
 all_graphs = pickle.load(open('all_graphs.p', 'rb')) 
 all_author = pickle.load(open('all_author.p', 'rb'))
@@ -41,5 +46,45 @@ interact(interact_func,
 #    df = df.fillna(0.0)
 #    print(f"{d}: {n_all_author[str(n_date)+'+00:00']}")
 #    print_graph(df, title=d+'  users:'+str(n_all_author[str(n_date)+'+00:00']), save_loc=f'res/{d}.png', no_other=True, no_loop=True)
+
+# %%
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer  
+import gensim 
+from gensim.utils import simple_preprocess 
+from gensim.parsing.preprocessing import STOPWORDS 
+import nltk 
+nltk.download('wordnet')
+from nltk.stem import WordNetLemmatizer, SnowballStemmer 
+from nltk.stem.porter import * 
+from nltk.corpus import stopwords
+
+def lemmatize_stemming(text):
+    return WordNetLemmatizer().lemmatize(text, pos='v')
+
+def preprocess(text):
+    result=list()
+    for token in gensim.utils.simple_preprocess(text) :
+        if token not in gensim.parsing.preprocessing.STOPWORDS:
+            result.append(lemmatize_stemming(token))
+           
+    return result
+
+SUB = 'NoNewNormal'
+KEY_WORDS = json.load(open('constants.json', 'r'))['KEY_WORDS_LIST']
+
+client = MongoClient('mongodb://admin:password@192.168.1.123') 
+db = client['Reddit'] 
+
+users = fetch_rand_users_from_file(SUB)
+comms = pd.DataFrame(db['User_Comments'].find({'author': {'$in': users}}, {'_id': 1, 'body': 1, 'created_utc': 1}))
+
+bodies, dates = comms['body'].values, [dt.datetime.fromtimestamp(a, tz=dt.timezone.utc) for a in comms['created_utc']]
+old_bodies = bodies.copy() 
+pool = multiprocessing.Pool() 
+bodies = list(tqdm(pool.map(preprocess, bodies)))
+
+comms = pd.DataFrame([bodies, dates], index=['Body', 'Date']).T 
+print(comms)
+
 
 # %%
