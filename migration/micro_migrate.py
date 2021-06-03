@@ -103,7 +103,8 @@ def migration_worker(migrate_dict: dict):
     e_np = edges.to_numpy() 
     e_np = [[aa/len(g) for aa in a] for a in e_np]
     edges = pd.DataFrame(e_np, columns=edges.columns, index=edges.index)
-        
+    edges = edges.fillna(0.0)
+
     return edges 
 
 def run_micro(args: dict):
@@ -116,7 +117,7 @@ def run_micro(args: dict):
     comments = pd.DataFrame(db['User_Comments'].find({'author': {'$in': users}, 'created_utc': {'$gte': unix_year}})).sort_values(by='created_utc', ascending=True)
 
     comments_g_a = comments.groupby('author') 
-    comments_g_s = list(comments.groupby('subreddit').size().sort_values(ascending=False).index[:20].values)
+    comments_g_s = list(comments.groupby('subreddit').size().sort_values(ascending=False).index[:100].values)
 
     graphs = []
     migrate_list = [{'a': a, 'g': g, 'comments_g_s': comments_g_s} for a, g in comments_g_a]
