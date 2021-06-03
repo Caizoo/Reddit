@@ -80,7 +80,7 @@ def run_macro(args: dict):
     # Average over users
     by_row_index = dfs.groupby(dfs.index)
     df_means = by_row_index.sum()
-    df_means = df_means.loc[f'{args["year"]}-11-01':]
+    df_means = df_means.loc[f'{args["year"]}-01-01':]
     df_means = df_means[top_subs]
     
     legs = list() 
@@ -95,7 +95,7 @@ def run_macro(args: dict):
 
     by_row_index = dfs_norm.groupby(dfs_norm.index)
     df_means = by_row_index.mean()
-    df_means = df_means.loc[f'{args["year"]}-11-01':]
+    df_means = df_means.loc[f'{args["year"]}-01-01':]
     df_means = df_means[top_subs]
     
     legs = list() 
