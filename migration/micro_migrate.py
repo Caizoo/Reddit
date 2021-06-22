@@ -108,7 +108,7 @@ def migration_worker(migrate_dict: dict):
     return edges 
 
 def run_micro(args: dict):
-    users = fetch_rand_users_from_file(args['sub'])  
+    users = fetch_top_users_from_file(args['sub'])  
     mongodb_address, username, password, database_str = args['mongodb_address'], args['username'], args['password'], args['database_str'] 
     client = MongoClient(f'mongodb://{username}:{password}@{mongodb_address}/', connect=False) if username!='' else MongoClient(f'mongodb://{mongodb_address}/', connect=False)
     db = client[database_str] 
@@ -117,7 +117,7 @@ def run_micro(args: dict):
     comments = pd.DataFrame(db['User_Comments'].find({'author': {'$in': users}, 'created_utc': {'$gte': unix_year}})).sort_values(by='created_utc', ascending=True)
 
     comments_g_a = comments.groupby('author') 
-    comments_g_s = list(comments.groupby('subreddit').size().sort_values(ascending=False).index[:100].values)
+    comments_g_s = list(comments.groupby('subreddit').size().sort_values(ascending=False).index[:args['top_x']].values)
 
     graphs = []
     migrate_list = [{'a': a, 'g': g, 'comments_g_s': comments_g_s} for a, g in comments_g_a]
